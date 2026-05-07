@@ -46,7 +46,7 @@ Introducing a **robust API** for Telegram Music Bots that allows **audio & video
 | 🚀 **Business lite** | 35,000 requests/day | ₹854 | 35% OFF |
 <!-- PRICING_END -->
 
-> Prices may vary. For the latest pricing, visit [music.xbitcode.com](https://music.xbitcode.com/#pricing)
+> Prices may vary. For the latest pricing, visit [https://t.me/BLACKFIREBOOYAHCUP](https://t.me/BLACKFIREBOOYAHCUP/#pricing)
 
 ---
 
