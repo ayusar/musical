@@ -78,9 +78,9 @@ Need help or want to subscribe?
 - **Telegram Channel:** [@BLACKFIREBOOYAHCUP](https://t.me/BLACKFIREBOOYAHCUP)
 - **Telegram Group:** [@AeraxTi](https://t.me/AeraxTi)
 - **Telegram User:** [@ade2321czf](https://t.me/ade2321czf)
-- **API & Promotions:** [Api_and_promotion](https://t.me/Api_and_promotion)
+- **API & Promotions:** [Api_and_promotion](https://t.me/ade2321czf)
 
-**Maintained by:** [Xbitcode](https://xbitcode.com/)
+**Maintained by:** [Xbitcode](https://t.me/ade2321czf/)
 
 ---
 
