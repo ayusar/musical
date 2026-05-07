@@ -1,5 +1,3 @@
-
-
 <p align="center">
   <img src="https://user-images.githubusercontent.com/73097560/115834477-dbab4500-a447-11eb-908a-139a6edaec5c.gif">
 </p>
@@ -45,10 +43,10 @@ Introducing a **robust API** for Telegram Music Bots that allows **audio & video
 | 🟠 **Business** | 50,000 requests/day | ₹1,129 | - |
 | ⚫ **Enterprise** | 100,000 requests/day | ₹1,879 | - |
 | 💎 **Ultra** | 150,000 requests/day | ₹2,389 | - |
-| 🚀 **Bussiness lite** | 35,000 requests/day | ₹854 | 35% OFF |
+| 🚀 **Business lite** | 35,000 requests/day | ₹854 | 35% OFF |
 <!-- PRICING_END -->
 
-> Prices may vary. For the latest pricing, visit [music.xbitcode.com](/#pricing)
+> Prices may vary. For the latest pricing, visit [music.xbitcode.com](https://music.xbitcode.com/#pricing)
 
 ---
 
@@ -72,29 +70,30 @@ Introducing a **robust API** for Telegram Music Bots that allows **audio & video
 
 ---
 
-📞 Contact & Support
+## 📞 Contact & Support
 
 Need help or want to subscribe?
 
-Website: [music.xbitcode.com](https://music.xbitcode.com)
-Telegram: [𝐀𝐏𝐈 𝐚𝐧𝐝 𝐩𝐫𝐨𝐦𝐨𝐭𝐢𝐨𝐧](https://t.me/Api_and_promotion)
+- **Website:** [music.xbitcode.com](https://music.xbitcode.com)
+- **Telegram Channel:** [@BLACKFIREBOOYAHCUP](https://t.me/BLACKFIREBOOYAHCUP)
+- **Telegram Group:** [@AeraxTi](https://t.me/AeraxTi)
+- **Telegram User:** [@ade2321czf](https://t.me/ade2321czf)
+- **API & Promotions:** [Api_and_promotion](https://t.me/Api_and_promotion)
 
-Maintained by: [Xbitcode](https://xbitcode.com/)
+**Maintained by:** [Xbitcode](https://xbitcode.com/)
 
 ---
 
-⚠️ Disclaimer
+## ⚠️ Disclaimer
 
 This service is intended for personal and educational use.
-Users must follow YouTube’s Terms of Service and Telegram’s Bot Policy.
-
+Users must follow YouTube's Terms of Service and Telegram's Bot Policy.
 
 ---
 
 <h2 align="center">
     ──「 Telegram Music Bot 」──
 </h2>
-
 
 <h3 align="center">
     ─「 ᴅᴇᴩʟᴏʏ ᴏɴ ʜᴇʀᴏᴋᴜ 」─
@@ -128,37 +127,3 @@ uv venv && uv sync
 # Set up your environment variables
 cp sample.env .env
 vi .env
-```
-> Press `I` to edit, fill in your variables, then press `Esc` and type `:wq` to save.
-
-```bash
-# Install tmux to keep the bot running after closing terminal
-sudo apt install tmux && tmux
-
-# Start the bot
-bash start
-```
-> To detach from tmux: Press `Ctrl+b` then `d`
-
-<h3 align="center">
-    ─「 sᴜᴩᴩᴏʀᴛ 」─
-</h3>
-
-<p align="center">
-<a href="https://t.me/stranger_support"><img src="https://img.shields.io/badge/-Support%20Group-blue.svg?style=for-the-badge&logo=Telegram"></a>
-</p>
-
-<p align="center">
-<a href="https://telegram.me/Ace_networkop"><img src="https://img.shields.io/badge/-Support%20Channel-blue.svg?style=for-the-badge&logo=Telegram"></a>
-</p>
-
-<p align="center">
-  Made with ❤️ by <strong>XBITCODE</strong>
-</p>
-```
-
-- <b> _sᴩᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ Sparrow For [Core Development](https://github.com/sparrow9616)
-- <br>_sᴩᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ  Rehanna For [Youtube Proxy](https://github.com/gr8rehanna) 
-- <br>_Maintainer  [Ami](https://github.com/amjiddader)
-- <br>__sᴩᴇᴄɪᴀʟ ᴛʜᴀɴᴋs ᴛᴏ Team yukki and Anon for base repository ♥️.
-
