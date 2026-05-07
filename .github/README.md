@@ -46,7 +46,7 @@ Introducing a **robust API** for Telegram Music Bots that allows **audio & video
 | 🚀 **Business lite** | 35,000 requests/day | ₹854 | 35% OFF |
 <!-- PRICING_END -->
 
-> Prices may vary. For the latest pricing, visit [https://t.me/BLACKFIREBOOYAHCUP](https://t.me/BLACKFIREBOOYAHCUP/#pricing)
+> Prices may vary. For the latest pricing, visit [ᴀᴇʀᴀ ᴍᴜꜱɪᴄ](https://t.me/BLACKFIREBOOYAHCUP/#pricing)
 
 ---
 
@@ -58,8 +58,8 @@ Introducing a **robust API** for Telegram Music Bots that allows **audio & video
 
 🔑 API Access Key
 
-> Online Documentation: [music.xbitcode.com/dashboard/docs](https://t.me/BLACKFIREBOOYAHCUP/dashboard/docs)
-> Get your API key from: [music.xbitcode.com](https://t.me/BLACKFIREBOOYAHCUP/auth/signin)
+> Online Documentation: [ᴀᴇʀᴀ ᴍᴜꜱɪᴄ/dashboard/docs](https://t.me/BLACKFIREBOOYAHCUP/dashboard/docs)
+> Get your API key from: [](https://t.me/BLACKFIREBOOYAHCUP/auth/signin)
 > Use your key in config.py
 > API key pattern: `xbit_10000000xx0233`
 
@@ -74,13 +74,13 @@ Introducing a **robust API** for Telegram Music Bots that allows **audio & video
 
 Need help or want to subscribe?
 
-- **Website:** [music.xbitcode.com](https://t.me/BLACKFIREBOOYAHCUP)
-- **Telegram Channel:** [@BLACKFIREBOOYAHCUP](https://t.me/BLACKFIREBOOYAHCUP)
-- **Telegram Group:** [@AeraxTi](https://t.me/AeraxTi)
-- **Telegram User:** [@ade2321czf](https://t.me/ade2321czf)
+- **Website:** [ᴀᴇʀᴀ ᴍᴜꜱɪᴄ](https://t.me/BLACKFIREBOOYAHCUP)
+- **Telegram Channel:** [ᴀᴇʀᴀ ᴍᴜꜱɪᴄ](https://t.me/BLACKFIREBOOYAHCUP)
+- **Telegram Group:** [ᴀᴇʀᴀ ᴍᴜꜱɪᴄ](https://t.me/AeraxTi)
+- **Telegram User:** [ᴀᴇʀᴀ ᴍᴜꜱɪᴄ](https://t.me/ade2321czf)
 - **API & Promotions:** [Api_and_promotion](https://t.me/ade2321czf)
 
-**Maintained by:** [Xbitcode](https://t.me/ade2321czf/)
+**Maintained by:** [ᴀᴇʀᴀ](https://t.me/ade2321czf/)
 
 ---
 
@@ -105,7 +105,7 @@ Users must follow YouTube's Terms of Service and Telegram's Bot Policy.
     ─「 ᴅᴇᴩʟᴏʏ ᴏɴ ʟᴏᴄᴀʟ ʜᴏsᴛ/ ᴠᴘs 」─
 </h3>
 
-- Get your [Necessary Variables](https://github.com/xbitcode/music/blob/main/sample.env)
+- Get your [Necessary Variables](https://github.com/abhiraj123456785212-ctrl/music.git/blob/main/sample.env)
 
 ```bash
 # Clone the repository
