@@ -97,7 +97,7 @@ async def stream(
                     "video" if video else "audio",
                     forceplay=forceplay,
                 )
-                img = await YouTube.thumbnail(vidid, True)
+                img = f"https://img.youtube.com/vi/{vidid}/maxresdefault.jpg"
                 button = stream_markup(_, chat_id)
                 run = await app.send_photo(
                     original_chat_id,
@@ -183,7 +183,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = await YouTube.thumbnail(vidid, True)
+            img = f"https://img.youtube.com/vi/{vidid}/maxresdefault.jpg"
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
@@ -351,7 +351,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = await YouTube.thumbnail(vidid, True)
+            img = f"https://img.youtube.com/vi/{vidid}/maxresdefault.jpg"
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
