@@ -13,6 +13,7 @@ from AnonXMusic.utils.exceptions import AssistantErr
 from AnonXMusic.utils.inline import aq_markup, close_markup, stream_markup
 from AnonXMusic.utils.pastebin import AnonyBin
 from AnonXMusic.utils.stream.queue import put_queue, put_queue_index
+from AnonXMusic.utils.thumbnails import get_thumb
 
 
 async def stream(
@@ -56,7 +57,7 @@ async def stream(
                 await put_queue(
                     chat_id,
                     original_chat_id,
-                    vidid,
+                    f"vid_{vidid}",
                     title,
                     duration_min,
                     user_name,
@@ -73,20 +74,22 @@ async def stream(
                     db[chat_id] = []
                 status = True if video else None
                 try:
-                    stream_url = await YouTube.get_stream_url(vidid, video=status)
+                    file_path, direct = await YouTube.download(
+                        vidid, mystic, video=status, videoid=True
+                    )
                 except:
                     raise AssistantErr(_["play_14"])
                 await Anony.join_call(
                     chat_id,
                     original_chat_id,
-                    stream_url,
+                    file_path,
                     video=status,
                     image=thumbnail,
                 )
                 await put_queue(
                     chat_id,
                     original_chat_id,
-                    vidid,
+                    file_path if direct else f"vid_{vidid}",
                     title,
                     duration_min,
                     user_name,
@@ -95,7 +98,7 @@ async def stream(
                     "video" if video else "audio",
                     forceplay=forceplay,
                 )
-                img = f"https://img.youtube.com/vi/{vidid}/maxresdefault.jpg"
+                img = await get_thumb(vidid,user_id)
                 button = stream_markup(_, chat_id)
                 run = await app.send_photo(
                     original_chat_id,
@@ -135,14 +138,16 @@ async def stream(
         thumbnail = result["thumb"]
         status = True if video else None
         try:
-            stream_url = await YouTube.get_stream_url(vidid, video=status)
+            file_path, direct = await YouTube.download(
+                vidid, mystic, videoid=True, video=status
+            )
         except:
             raise AssistantErr(_["play_14"])
         if await is_active_chat(chat_id):
             await put_queue(
                 chat_id,
                 original_chat_id,
-                vidid,
+                file_path if direct else f"vid_{vidid}",
                 title,
                 duration_min,
                 user_name,
@@ -163,14 +168,14 @@ async def stream(
             await Anony.join_call(
                 chat_id,
                 original_chat_id,
-                stream_url,
+                file_path,
                 video=status,
                 image=thumbnail,
             )
             await put_queue(
                 chat_id,
                 original_chat_id,
-                vidid,
+                file_path if direct else f"vid_{vidid}",
                 title,
                 duration_min,
                 user_name,
@@ -179,7 +184,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = f"https://img.youtube.com/vi/{vidid}/maxresdefault.jpg"
+            img = await get_thumb(vidid,user_id)
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
@@ -307,7 +312,7 @@ async def stream(
             await put_queue(
                 chat_id,
                 original_chat_id,
-                vidid,
+                f"live_{vidid}",
                 title,
                 duration_min,
                 user_name,
@@ -325,20 +330,20 @@ async def stream(
         else:
             if not forceplay:
                 db[chat_id] = []
-            n, stream_url = await YouTube.video(link)
+            n, file_path = await YouTube.video(link)
             if n == 0:
                 raise AssistantErr(_["str_3"])
             await Anony.join_call(
                 chat_id,
                 original_chat_id,
-                stream_url,
+                file_path,
                 video=status,
                 image=thumbnail if thumbnail else None,
             )
             await put_queue(
                 chat_id,
                 original_chat_id,
-                vidid,
+                f"live_{vidid}",
                 title,
                 duration_min,
                 user_name,
@@ -347,7 +352,7 @@ async def stream(
                 "video" if video else "audio",
                 forceplay=forceplay,
             )
-            img = f"https://img.youtube.com/vi/{vidid}/maxresdefault.jpg"
+            img = await get_thumb(vidid,user_id)
             button = stream_markup(_, chat_id)
             run = await app.send_photo(
                 original_chat_id,
