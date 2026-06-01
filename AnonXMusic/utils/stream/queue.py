@@ -3,13 +3,13 @@ from typing import Union
 
 from AnonXMusic.misc import db
 from AnonXMusic.utils.formatters import check_duration, seconds_to_min
-from config import autoclean, time_to_seconds
+from config import time_to_seconds
 
 
 async def put_queue(
     chat_id,
     original_chat_id,
-    file,
+    vidid,
     title,
     duration,
     user,
@@ -30,7 +30,6 @@ async def put_queue(
         "by": user,
         "user_id": user_id,
         "chat_id": original_chat_id,
-        "file": file,
         "vidid": vidid,
         "seconds": duration_in_seconds,
         "played": 0,
@@ -44,7 +43,6 @@ async def put_queue(
             db[chat_id].append(put)
     else:
         db[chat_id].append(put)
-    autoclean.append(file)
 
 
 async def put_queue_index(
