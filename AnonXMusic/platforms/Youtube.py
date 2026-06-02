@@ -9,6 +9,7 @@ from typing import Union
 import string
 import requests
 import yt_dlp
+import aiohttp   # <-- यह import जोड़ा गया है
 from pyrogram.enums import MessageEntityType
 from pyrogram.types import Message
 from requests.adapters import HTTPAdapter
@@ -49,6 +50,7 @@ class YouTubeAPI:
             "cookie_downloads": 0,
             "existing_files": 0
         }
+
 
     async def exists(self, link: str, videoid: Union[bool, str] = None):
         if videoid:
@@ -317,6 +319,7 @@ class YouTubeAPI:
             LOGGER(__name__).error(f"Error in slider: {str(e)}")
             raise ValueError("Failed to fetch video details")
 
+    # ========== MODIFIED DOWNLOAD METHOD (NO FILE DOWNLOAD) ==========
     async def download(
         self,
         link: str,
@@ -327,54 +330,46 @@ class YouTubeAPI:
         songvideo: Union[bool, str] = None,
         format_id: Union[bool, str] = None,
         title: Union[bool, str] = None,
-    ) -> str:
+    ):
         """
-        MODIFIED: No file download. Just fetch the direct stream URL from the backend API.
-        Returns (stream_url, direct_flag). direct_flag = True means URL can be used directly.
+        Returns (stream_url, True) where stream_url is a direct audio/video URL from the backend API.
+        No file is downloaded.
         """
         if videoid:
             vid_id = link
         else:
-            # Extract video ID from URL
             match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})(?:[&?]|$)", link)
-            if match:
-                vid_id = match.group(1)
-            else:
-                vid_id = None
+            vid_id = match.group(1) if match else None
 
         if not vid_id:
             return None, False
 
-        # Fetch stream URL from your backend API
+        # If called for songaudio or songvideo (not used in this bot), simply return None
+        if songvideo or songaudio:
+            return None, False
+
         try:
             async with aiohttp.ClientSession() as session:
                 headers = {"x-api-key": f"{YT_API_KEY}"}
-                async with session.get(f"{YTPROXY}/info/{vid_id}", headers=headers, timeout=30) as resp:
+                api_url = f"{YTPROXY}/info/{vid_id}"
+                async with session.get(api_url, headers=headers, timeout=30) as resp:
                     if resp.status != 200:
-                        logger.error(f"API error: {resp.status}")
+                        logger.error(f"API returned status {resp.status}")
                         return None, False
                     data = await resp.json()
                     if data.get("status") != "success":
-                        logger.error(f"API returned error: {data.get('message')}")
+                        logger.error(f"API error: {data.get('message')}")
                         return None, False
-                    
-                    if video:
-                        stream_url = data.get("video_url")
-                    else:
-                        stream_url = data.get("audio_url")
-                    
+                    # choose audio or video stream
+                    stream_url = data.get("video_url" if video else "audio_url")
                     if not stream_url:
-                        # fallback: if audio_url missing, use video_url
-                        stream_url = data.get("video_url")
-                    
+                        stream_url = data.get("video_url")  # fallback
                     if not stream_url:
                         logger.error(f"No stream URL for {vid_id}")
                         return None, False
-                    
-                    # Return URL directly, no download
                     return stream_url, True
         except Exception as e:
-            logger.error(f"Failed to get stream URL for {vid_id}: {e}")
+            logger.error(f"Download method error: {e}")
             return None, False
 
 YouTube = YouTubeAPI()
