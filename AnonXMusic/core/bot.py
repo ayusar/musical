@@ -17,6 +17,7 @@ class Anony(Client):
             in_memory=True,
             parse_mode=ParseMode.HTML,
             max_concurrent_transmissions=7,
+            proxy=config.PROXY,   # <--- Proxy Support (India Block Fix)
         )
 
     async def start(self):
