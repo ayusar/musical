@@ -267,3 +267,162 @@ async def queue_back(client, CallbackQuery: CallbackQuery, _):
                     break
         except:
             return
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Enhanced queue list — replaces plain text list with interactive buttons
+# ─────────────────────────────────────────────────────────────────────────────
+
+from AnonXMusic.utils.inline.queue import queue_list_markup
+from config import autoclean
+
+
+@app.on_callback_query(filters.regex("GetQueuedList") & ~BANNED_USERS)
+@languageCB
+async def queued_tracks_interactive(client, CallbackQuery: CallbackQuery, _):
+    """Shows the full queue as inline buttons (skip-to / remove)."""
+    callback_data = CallbackQuery.data.strip()
+    callback_request = callback_data.split(None, 1)[1]
+    what, videoid = callback_request.split("|")
+
+    try:
+        chat_id, channel = await get_channeplayCB(_, what, CallbackQuery)
+    except:
+        return
+
+    if not await is_active_chat(chat_id):
+        return await CallbackQuery.answer(_["general_5"], show_alert=True)
+
+    got = db.get(chat_id)
+    if not got:
+        return await CallbackQuery.answer(_["queue_2"], show_alert=True)
+    if len(got) == 1:
+        return await CallbackQuery.answer(_["queue_5"], show_alert=True)
+
+    await CallbackQuery.answer()
+    basic[videoid] = False
+
+    buttons = queue_list_markup(_, what, chat_id, got)
+    cap = f"📋 **Queue** — {len(got)} track(s)\n\nTap a track to skip to it, or 🗑 to remove it."
+    await CallbackQuery.edit_message_caption(caption=cap, reply_markup=buttons)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Skip to position N in queue
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.on_callback_query(filters.regex(r"^QSkipTo\s") & ~BANNED_USERS)
+@languageCB
+async def queue_skip_to(client, CallbackQuery: CallbackQuery, _):
+    """Drops all tracks before position N and skips to it."""
+    parts = CallbackQuery.data.strip().split(None, 1)[1].split("|")
+    if len(parts) < 3:
+        return await CallbackQuery.answer("Invalid data.", show_alert=True)
+
+    what, chat_id_str, pos_str = parts[0], parts[1], parts[2]
+    chat_id = int(chat_id_str)
+    pos = int(pos_str)
+
+    try:
+        real_chat_id, channel = await get_channeplayCB(_, what, CallbackQuery)
+    except:
+        return
+
+    if not await is_active_chat(real_chat_id):
+        return await CallbackQuery.answer(_["general_5"], show_alert=True)
+
+    got = db.get(real_chat_id)
+    if not got or len(got) <= pos:
+        return await CallbackQuery.answer("Track not found in queue.", show_alert=True)
+
+    # Pop everything between index 0 (playing) and pos
+    for _ in range(pos - 1):
+        try:
+            popped = got.pop(1)
+            if popped:
+                try:
+                    autoclean.remove(popped["file"])
+                except:
+                    pass
+        except:
+            break
+
+    await CallbackQuery.answer(f"⏭ Skipping to track #{pos}…", show_alert=False)
+    # Trigger an actual skip using the existing skip mechanism
+    from AnonXMusic.core.call import Anony as _Anony
+    try:
+        got2 = db.get(real_chat_id)
+        if got2:
+            popped = got2.pop(0)
+            if popped:
+                try:
+                    autoclean.remove(popped["file"])
+                except:
+                    pass
+        if not db.get(real_chat_id):
+            await _Anony.stop_stream(real_chat_id)
+            return await CallbackQuery.edit_message_caption(
+                caption="Queue ended.", reply_markup=None
+            )
+        # Refresh the queue display
+        got3 = db.get(real_chat_id)
+        if got3:
+            buttons = queue_list_markup(_, what, real_chat_id, got3)
+            await CallbackQuery.edit_message_caption(
+                caption=f"⏭ Skipped! Now at track **{got3[0]['title']}**\n\n"
+                        f"📋 **Queue** — {len(got3)} track(s) remaining.",
+                reply_markup=buttons,
+            )
+    except Exception as e:
+        await CallbackQuery.answer(f"Error: {e}", show_alert=True)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Remove a specific track from queue
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.on_callback_query(filters.regex(r"^QRemove\s") & ~BANNED_USERS)
+@languageCB
+async def queue_remove_track(client, CallbackQuery: CallbackQuery, _):
+    """Removes a specific track at position N from queue (cannot remove index 0)."""
+    parts = CallbackQuery.data.strip().split(None, 1)[1].split("|")
+    if len(parts) < 3:
+        return await CallbackQuery.answer("Invalid data.", show_alert=True)
+
+    what, chat_id_str, pos_str = parts[0], parts[1], parts[2]
+    chat_id = int(chat_id_str)
+    pos = int(pos_str)
+
+    try:
+        real_chat_id, channel = await get_channeplayCB(_, what, CallbackQuery)
+    except:
+        return
+
+    if not await is_active_chat(real_chat_id):
+        return await CallbackQuery.answer(_["general_5"], show_alert=True)
+
+    got = db.get(real_chat_id)
+    if not got or len(got) <= pos:
+        return await CallbackQuery.answer("Track not found.", show_alert=True)
+    if pos == 0:
+        return await CallbackQuery.answer("Can't remove the currently playing track.", show_alert=True)
+
+    removed = got.pop(pos)
+    removed_title = (removed.get("title") or "Unknown")[:30]
+    try:
+        autoclean.remove(removed["file"])
+    except:
+        pass
+
+    await CallbackQuery.answer(f"🗑 Removed: {removed_title}", show_alert=False)
+
+    got2 = db.get(real_chat_id)
+    if not got2:
+        return await CallbackQuery.edit_message_caption(caption="Queue is now empty.", reply_markup=None)
+
+    buttons = queue_list_markup(_, what, real_chat_id, got2)
+    await CallbackQuery.edit_message_caption(
+        caption=f"🗑 Removed **{removed_title}**\n\n"
+                f"📋 **Queue** — {len(got2)} track(s) remaining.",
+        reply_markup=buttons,
+    )
