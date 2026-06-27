@@ -328,6 +328,46 @@ class YouTubeAPI:
             LOGGER(__name__).error(f"Error in slider: {str(e)}")
             raise ValueError("Failed to fetch video details")
 
+    async def _ytdlp_fallback(
+        self,
+        vid_id: str,
+        video: bool = False,
+    ):
+        """
+        Fallback: use yt-dlp with cookies to get a direct stream URL.
+        Called when the API returns success but the cache/URL is empty.
+        """
+        link = self.base + vid_id
+        cookie = cookie_txt_file()
+        ydl_opts = {
+            "quiet": True,
+            "no_warnings": True,
+            "format": "bestvideo[height<=720]+bestaudio/best" if video else "bestaudio/best",
+            "noplaylist": True,
+            "skip_download": True,
+        }
+        if cookie:
+            ydl_opts["cookiefile"] = cookie
+
+        try:
+            loop = asyncio.get_event_loop()
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = await loop.run_in_executor(
+                    None, lambda: ydl.extract_info(link, download=False)
+                )
+            if not info:
+                return None
+            url = info.get("url") or (
+                next(
+                    (f["url"] for f in info.get("formats", []) if f.get("url")),
+                    None,
+                )
+            )
+            return url
+        except Exception as e:
+            logger.error(f"yt-dlp fallback error: {e}")
+            return None
+
     async def download(
         self,
         link: str,
@@ -340,8 +380,10 @@ class YouTubeAPI:
         title: Union[bool, str] = None,
     ):
         """
-        Returns (stream_url, True) where stream_url is a direct audio/video URL from the backend API.
-        No file is downloaded.
+        Returns (stream_url, True).
+        1. Tries the backend API (YTPROXY).
+        2. If API returns success but URL is empty ("cache empty" bug) → retries once.
+        3. If still empty → falls back to yt-dlp with cookies.
         """
         if videoid:
             vid_id = link
@@ -355,27 +397,51 @@ class YouTubeAPI:
         if songvideo or songaudio:
             return None, False
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                headers = {"x-api-key": f"{YT_API_KEY}"}
-                api_url = f"{YTPROXY}/info/{vid_id}"
-                async with session.get(api_url, headers=headers, timeout=30) as resp:
-                    if resp.status != 200:
-                        logger.error(f"API returned status {resp.status}")
-                        return None, False
-                    data = await resp.json()
-                    if data.get("status") != "success":
-                        logger.error(f"API error: {data.get('message')}")
-                        return None, False
-                    stream_url = data.get("video_url" if video else "audio_url")
-                    if not stream_url:
-                        stream_url = data.get("video_url")
-                    if not stream_url:
-                        logger.error(f"No stream URL for {vid_id}")
-                        return None, False
-                    return stream_url, True
-        except Exception as e:
-            logger.error(f"Download method error: {e}")
-            return None, False
+        url_key = "video_url" if video else "audio_url"
+
+        # ── Step 1: try API, up to 2 attempts ────────────────────────────────
+        for attempt in range(2):
+            try:
+                async with aiohttp.ClientSession() as session:
+                    headers = {"x-api-key": f"{YT_API_KEY}"}
+                    api_url = f"{YTPROXY}/info/{vid_id}"
+                    async with session.get(
+                        api_url, headers=headers, timeout=aiohttp.ClientTimeout(total=30)
+                    ) as resp:
+                        if resp.status != 200:
+                            logger.error(f"API returned status {resp.status} (attempt {attempt+1})")
+                            break  # non-200 won't fix itself, go to fallback
+                        data = await resp.json()
+
+                        if data.get("status") != "success":
+                            logger.error(f"API error: {data.get('message')} (attempt {attempt+1})")
+                            break
+
+                        stream_url = data.get(url_key) or data.get("video_url")
+
+                        if stream_url:
+                            return stream_url, True
+
+                        # "Success state but cache empty" — log and retry once
+                        logger.warning(
+                            f"AnonXMusic.platforms.Youtube - API Error: "
+                            f"Success state but cache empty for {vid_id} "
+                            f"(attempt {attempt+1}), {'retrying...' if attempt == 0 else 'falling back to yt-dlp'}"
+                        )
+                        if attempt == 0:
+                            await asyncio.sleep(2)  # brief wait before retry
+
+            except Exception as e:
+                logger.error(f"Download API error (attempt {attempt+1}): {e}")
+                break
+
+        # ── Step 2: fallback to yt-dlp with cookies ──────────────────────────
+        logger.info(f"Falling back to yt-dlp for {vid_id}")
+        url = await self._ytdlp_fallback(vid_id, video=bool(video))
+        if url:
+            return url, True
+
+        logger.error(f"All download methods failed for {vid_id}")
+        return None, False
 
 YouTube = YouTubeAPI()
