@@ -14,6 +14,7 @@ from AnonXMusic.utils.inline import aq_markup, close_markup, stream_markup
 from AnonXMusic.utils.pastebin import AnonyBin
 from AnonXMusic.utils.stream.queue import put_queue, put_queue_index
 from AnonXMusic.utils.thumbnails import get_thumb
+from AnonXMusic.plugins.admins.effects import preprocess_effects
 
 
 async def stream(
@@ -85,6 +86,7 @@ async def stream(
                     )
                 except Exception as e:
                     raise AssistantErr(_["play_14"])
+                preprocess_effects(file_path)
                 # जॉइन कॉल और प्ले शुरू करो
                 await Anony.join_call(
                     chat_id,
@@ -163,6 +165,7 @@ async def stream(
             )
         except:
             raise AssistantErr(_["play_14"])
+        preprocess_effects(file_path)
         if await is_active_chat(chat_id):
             await put_queue(
                 chat_id,
