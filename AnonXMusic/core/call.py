@@ -439,6 +439,12 @@ class Call(PyTgCalls):
                     return await mystic.edit_text(
                         _["call_6"], disable_web_page_preview=True
                     )
+                # pre-process effects in background for the newly downloaded track
+                try:
+                    from AnonXMusic.plugins.admins.effects import preprocess_effects
+                    preprocess_effects(file_path)
+                except Exception:
+                    pass
                 if video:
                     stream = MediaStream(
                         file_path,
