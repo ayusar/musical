@@ -1,10 +1,29 @@
 rm -f logs.txt log.txt
 rm -rf __pycache__
 rm -f *.session
+
+# Bind port 8080 instantly in background so Render detects it immediately
+python3 -c "
+import asyncio
+from aiohttp import web
+
+async def health(r): return web.Response(text='OK')
+async def run():
+    a = web.Application()
+    a.router.add_get('/', health)
+    a.router.add_get('/health', health)
+    r = web.AppRunner(a)
+    await r.setup()
+    await web.TCPSite(r, '0.0.0.0', 8080).start()
+    print('Port 8080 open')
+    await asyncio.Event().wait()
+asyncio.run(run())
+" &
+
 echo "Disabling IPV6"
 sysctl -w net.ipv6.conf.all.disable_ipv6=1 &
 sysctl -w net.ipv6.conf.default.disable_ipv6=1 &
-sysctl -w net.ipv6.conf.lo.disable_ipv6=1 & 
+sysctl -w net.ipv6.conf.lo.disable_ipv6=1 &
 sleep 2
 echo "Starting Bot..."
 uv run python3 -m AnonXMusic
