@@ -1,6 +1,5 @@
 import asyncio
 import importlib
-from aiohttp import web
 
 from pyrogram import idle
 from pytgcalls.exceptions import NoActiveGroupCall
@@ -14,27 +13,7 @@ from AnonXMusic.utils.database import get_banned_users, get_gbanned
 from config import BANNED_USERS
 
 
-# ── Port 8080 keep-alive (required for Render) ───────────────────────────────
-
-async def health(request):
-    return web.Response(text="OK")
-
-async def start_web_server():
-    aio_app = web.Application()
-    aio_app.router.add_get("/", health)
-    aio_app.router.add_get("/health", health)
-    runner = web.AppRunner(aio_app)
-    await runner.setup()
-    site = web.TCPSite(runner, "0.0.0.0", 8080)
-    await site.start()
-    LOGGER(__name__).info("Keep-alive web server started on port 8080")
-
-# ─────────────────────────────────────────────────────────────────────────────
-
 async def init():
-    # Start web server FIRST so Render detects the open port immediately
-    await start_web_server()
-
     if (
         not config.STRING1
         and not config.STRING2
@@ -63,10 +42,9 @@ async def init():
     try:
         await Anony.stream_call("https://te.legra.ph/file/29f784eb49d230ab62e9e.mp4")
     except NoActiveGroupCall:
-        LOGGER("AnonXMusic").error(
-            "Please turn on the videochat of your log group/channel.\n\nStopping Bot..."
+        LOGGER("AnonXMusic").warning(
+            "No active group call found in log group/channel. Continuing anyway..."
         )
-        exit()
     except:
         pass
 
