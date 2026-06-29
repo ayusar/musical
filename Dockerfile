@@ -18,6 +18,6 @@ RUN apt-get update \
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Expose port 8080 for Render
-
+EXPOSE 8080
 
 CMD ["bash", "start"]
