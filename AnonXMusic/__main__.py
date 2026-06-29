@@ -14,7 +14,7 @@ from AnonXMusic.utils.database import get_banned_users, get_gbanned
 from config import BANNED_USERS
 
 
-# ── Port 8080 keep-alive (required for Render free plan) ─────────────────────
+# ── Port 8080 keep-alive (required for Render) ───────────────────────────────
 
 async def health(request):
     return web.Response(text="OK")
@@ -32,6 +32,9 @@ async def start_web_server():
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def init():
+    # Start web server FIRST so Render detects the open port immediately
+    await start_web_server()
+
     if (
         not config.STRING1
         and not config.STRING2
@@ -51,7 +54,6 @@ async def init():
             BANNED_USERS.add(user_id)
     except:
         pass
-    await start_web_server()
     await app.start()
     for all_module in ALL_MODULES:
         importlib.import_module("AnonXMusic.plugins" + all_module)
@@ -62,7 +64,7 @@ async def init():
         await Anony.stream_call("https://te.legra.ph/file/29f784eb49d230ab62e9e.mp4")
     except NoActiveGroupCall:
         LOGGER("AnonXMusic").error(
-            "Please turn on the videochat of your log group\\channel.\n\nStopping Bot..."
+            "Please turn on the videochat of your log group/channel.\n\nStopping Bot..."
         )
         exit()
     except:
