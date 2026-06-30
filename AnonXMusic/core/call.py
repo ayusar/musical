@@ -442,7 +442,7 @@ class Call(PyTgCalls):
                 # pre-process effects in background for the newly downloaded track
                 try:
                     from AnonXMusic.plugins.admins.effects import preprocess_effects
-                    preprocess_effects(file_path)
+                    preprocess_effects(videoid, file_path)
                 except Exception:
                     pass
                 if video:
