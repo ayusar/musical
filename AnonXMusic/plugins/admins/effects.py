@@ -48,25 +48,43 @@ _processing: set = set()
 
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Pre-processor — call this right after a file is downloaded
+# Pre-processor — call this right after a stream URL / file is known
 # ──────────────────────────────────────────────────────────────────────────────
 
-async def preprocess_effects(file_path: str):
+# ffmpeg flags that let it pull a remote (signed/expiring) HTTP(S) stream URL
+# reliably instead of just bailing out on a hiccup.
+_NETWORK_INPUT_FLAGS = (
+    '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 '
+    '-rw_timeout 15000000'
+)
+
+
+def _is_remote(source: str) -> bool:
+    return source.startswith("http://") or source.startswith("https://")
+
+
+def _ffmpeg_cmd(source: str, af: str, out: str) -> str:
+    pre = _NETWORK_INPUT_FLAGS + " " if _is_remote(source) else ""
+    return f'ffmpeg {pre}-i "{source}" -af "{af}" -vn "{out}" -y'
+
+
+async def preprocess_effects(vidid: str, source: str):
     """
-    Kick off background ffmpeg jobs for all effects on a freshly downloaded file.
+    Kick off background ffmpeg jobs for all effects, keyed by video id.
+    `source` can be a local downloaded file OR a remote stream URL — both work,
+    since ffmpeg can read straight from an http(s) URL.
     Safe to call and forget — errors are logged and swallowed.
     """
-    if not file_path or not os.path.isfile(file_path):
+    if not vidid or not source:
         return
-    # only process real downloaded audio files
-    if "downloads" not in file_path:
+    if not _is_remote(source) and not os.path.isfile(source):
         return
 
     async def _process(effect: str):
-        out = _effect_path(file_path, effect)
+        out = _effect_path(vidid, effect)
         if os.path.isfile(out):
             return  # already cached
-        key = f"{file_path}:{effect}"
+        key = f"{vidid}:{effect}"
         if key in _processing:
             return
         _processing.add(key)
@@ -74,12 +92,16 @@ async def preprocess_effects(file_path: str):
             os.makedirs(EFFECTS_DIR, exist_ok=True)
             af = EFFECT_FILTERS[effect]
             proc = await asyncio.create_subprocess_shell(
-                f'ffmpeg -i "{file_path}" -af "{af}" -vn "{out}" -y',
+                _ffmpeg_cmd(source, af, out),
                 stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.DEVNULL,
             )
-            await proc.communicate()
+            try:
+                await asyncio.wait_for(proc.communicate(), timeout=120)
+            except asyncio.TimeoutError:
+                proc.kill()
+                LOGGER(__name__).warning(f"Effect pre-process timed out [{effect}] for {vidid}")
         except Exception as e:
             LOGGER(__name__).warning(f"Effect pre-process failed [{effect}]: {e}")
         finally:
@@ -89,13 +111,12 @@ async def preprocess_effects(file_path: str):
     asyncio.gather(*[_process(fx) for fx in EFFECT_FILTERS], return_exceptions=True)
 
 
-def _effect_path(file_path: str, effect: str) -> str:
-    base = os.path.splitext(os.path.basename(file_path))[0]
-    return os.path.join(EFFECTS_DIR, f"{effect}_{base}.mp3")
+def _effect_path(vidid: str, effect: str) -> str:
+    return os.path.join(EFFECTS_DIR, f"{effect}_{vidid}.mp3")
 
 
-def is_effect_ready(file_path: str, effect: str) -> bool:
-    return os.path.isfile(_effect_path(file_path, effect))
+def is_effect_ready(vidid: str, effect: str) -> bool:
+    return os.path.isfile(_effect_path(vidid, effect))
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -105,8 +126,8 @@ def is_effect_ready(file_path: str, effect: str) -> bool:
 async def stream_with_effect(chat_id: int, effect: str, playing: list):
     assistant = await Anony.group_assistant(Anony, chat_id)
 
-    original_file = playing[0].get("original_file", playing[0]["file"])
-    out = _effect_path(original_file, effect)
+    vidid = playing[0]["vidid"]
+    out = _effect_path(vidid, effect)
 
     if not os.path.isfile(out):
         raise FileNotFoundError("Effect file not ready yet.")
@@ -156,6 +177,7 @@ async def _toggle_effect(message: Message, chat_id: int, effect: str, _):
         return await message.reply_text(_["queue_2"])
 
     original_file  = playing[0].get("original_file", playing[0]["file"])
+    vidid          = playing[0]["vidid"]
     duration_secs  = int(playing[0].get("seconds", 0))
 
     if duration_secs == 0 or "live_" in original_file or "index_" in original_file:
@@ -173,8 +195,8 @@ async def _toggle_effect(message: Message, chat_id: int, effect: str, _):
     label = EFFECT_LABELS[effect]
 
     # Check if pre-processed file is ready
-    if not is_effect_ready(original_file, effect):
-        key = f"{original_file}:{effect}"
+    if not is_effect_ready(vidid, effect):
+        key = f"{vidid}:{effect}"
         if key in _processing:
             # Still processing — wait for it
             wait_msg = await message.reply_text(
@@ -182,7 +204,7 @@ async def _toggle_effect(message: Message, chat_id: int, effect: str, _):
             )
             for _ in range(30):           # wait up to 30s
                 await asyncio.sleep(1)
-                if is_effect_ready(original_file, effect):
+                if is_effect_ready(vidid, effect):
                     break
             else:
                 await wait_msg.delete()
@@ -195,17 +217,26 @@ async def _toggle_effect(message: Message, chat_id: int, effect: str, _):
             wait_msg = await message.reply_text(f"⏳ Applying {label}…")
             os.makedirs(EFFECTS_DIR, exist_ok=True)
             af  = EFFECT_FILTERS[effect]
-            out = _effect_path(original_file, effect)
-            proc = await asyncio.create_subprocess_shell(
-                f'ffmpeg -i "{original_file}" -af "{af}" -vn "{out}" -y',
-                stdin=asyncio.subprocess.DEVNULL,
-                stdout=asyncio.subprocess.DEVNULL,
-                stderr=asyncio.subprocess.DEVNULL,
-            )
-            await proc.communicate()
+            out = _effect_path(vidid, effect)
+            _processing.add(key)
+            try:
+                proc = await asyncio.create_subprocess_shell(
+                    _ffmpeg_cmd(original_file, af, out),
+                    stdin=asyncio.subprocess.DEVNULL,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+                try:
+                    await asyncio.wait_for(proc.communicate(), timeout=60)
+                except asyncio.TimeoutError:
+                    proc.kill()
+            finally:
+                _processing.discard(key)
             await wait_msg.delete()
             if not os.path.isfile(out):
-                return await message.reply_text("❌ Failed to apply effect.")
+                return await message.reply_text(
+                    "❌ Failed to apply effect. The source stream may be unreachable, try playing the song again."
+                )
 
     try:
         await stream_with_effect(chat_id, effect, playing)
@@ -283,9 +314,9 @@ async def apply_effect_cb(client, CallbackQuery: CallbackQuery, _):
         return await CallbackQuery.answer(_["queue_2"], show_alert=True)
 
     label = EFFECT_LABELS.get(effect, effect)
-    original_file = playing[0].get("original_file", playing[0]["file"])
+    vidid = playing[0]["vidid"]
 
-    if not is_effect_ready(original_file, effect):
+    if not is_effect_ready(vidid, effect):
         return await CallbackQuery.answer(
             f"⏳ {label} is still being prepared, try again in a moment.",
             show_alert=True,
