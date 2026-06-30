@@ -15,6 +15,7 @@ from pytgcalls.types import AudioQuality, VideoQuality, MediaStream
 
 from AnonXMusic import app, LOGGER
 from AnonXMusic.core.call import Anony
+from AnonXMusic.utils.database import group_assistant
 from AnonXMusic.misc import SUDOERS, db
 from AnonXMusic.utils import AdminRightsCheck
 from AnonXMusic.utils.database import is_active_chat, is_nonadmin_chat
@@ -124,7 +125,7 @@ def is_effect_ready(vidid: str, effect: str) -> bool:
 # ──────────────────────────────────────────────────────────────────────────────
 
 async def stream_with_effect(chat_id: int, effect: str, playing: list):
-    assistant = await Anony.group_assistant(Anony, chat_id)
+    assistant = await group_assistant(Anony, chat_id)
 
     vidid = playing[0]["vidid"]
     out = _effect_path(vidid, effect)
