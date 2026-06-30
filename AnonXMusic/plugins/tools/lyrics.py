@@ -13,6 +13,7 @@ Sources (tried in order):
 import asyncio
 import html
 import re
+from urllib.parse import quote
 
 import aiohttp
 from pyrogram import filters
@@ -66,8 +67,8 @@ async def _fetch_lyricsovh(query: str) -> str | None:
         artist, title = query, query   # ovh is lenient with artist field
 
     url = LYRICS_OVH.format(
-        artist=aiohttp.helpers.requote_uri(artist.strip()),
-        title=aiohttp.helpers.requote_uri(title.strip()),
+        artist=quote(artist.strip(), safe=""),
+        title=quote(title.strip(), safe=""),
     )
     try:
         async with aiohttp.ClientSession() as s:
